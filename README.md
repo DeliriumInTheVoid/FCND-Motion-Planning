@@ -1,3 +1,49 @@
+# Submission overview
+
+There are two path planners implemented in this project. The first one is a planner for full global path which uses Voronoi algorithm and the second one is a horizon planner which uses probabilistic approach for building local paths between global path points.
+Of Course there is no reason for horizon planner to be used in this project, but it is implemented for educational purposes.
+
+### Global path planner
+The global path planner is implemented in `global_path_planner.py` file. It uses Voronoi algorithm to build a graph of the environment and then uses A* algorithm to find the shortest path between start and goal points. The _graph_ and _grid_ is built using `create_voronoi_grid_and_edges` function which creates a 2D grid of the environment and Voronoi graph edges. Method `_graph_voronoi_planing` builds global path with the next steps:
+ - Create graph from edges.
+ - Find nearest nodes to start and goal points.
+ - Use `a_star_graph` function to find the shortest path between start and goal .
+ - Prune path using `prune_path_bresenham` function which uses conservative bresenham algorithm to remove unnecessary waypoints.
+   ![Quad Image](./misc/bres_path_prune.gif)
+
+#### Global path planner result:
+![Quad Image](./misc/global_path_planner_result.png)
+
+### Horizon path planner
+The horizon path planner is implemented in `horizon_path_planner.py` file. It builds a path between two point which are used to create a vector of horizon frame orientation and position. Horizon planner also uses A* algorithm to find the shortest path between start and goal points. `create_local_path` method creates a local path between two points using probabilistic approach with the next steps:
+ - Create a horizon frame and **samples** using `create_horizon_frame_with_samples` method with next steps:
+   - find a **vector** between start and goal points;
+   - create a **frame** with center at start point and orientation of the **vector**;
+   - create a set of random **samples** in the **frame**;
+ - find polygons which are intersected by the **frame**;
+ - find **samples** inside frame which are not intersected by the polygons with `filter_samples` function;
+ - create a graph from **samples** using KDTree with `create_graph` function;
+ - find nearest nodes to start and goal points with `closest_node_graph` function;
+ - use `a_star_graph` function to find the shortest path between start and goal nodes in the graph;
+ - prune path using `prune_path_3d` function which removes unnecessary waypoints.
+    ![Quad Image](./misc/horizon_planner_step.png)
+    - red rectangle is the horizon **frame**;
+    - red rectangles are polygons which are intersected by the horizon **frame**;
+    - red points are **samples** which are not intersected by the polygons and are used to build a graph;
+    - transparent black lines are **edges** of the graph;
+    - green bold line is the **path** between start and goal points;
+    - blue bold line is the final **pruned path**.
+
+#### Horizon path planner result:
+![Quad Image](./misc/horizon_path.gif)
+
+### Constants for planning
+Due to the issues with the simulator and performance of the planners in DEBUG mode and after connecting to the simulator, the following constants in the `planning_constants.py` file are used to control the planning process:
+ - `PRE_PLANNING` - if `True` both planners will be executed before connecting to the simulator;
+ - `USE_HORIZON_PLANNER` - if `True` the horizon planner will be used, otherwise the global planner will be used only;
+ - `RUN_DRONE` - if `True` the drone will be executed after connecting to the simulator. With pre-planned path or with the path from the planners during flight.
+
+
 # FCND - 3D Motion Planning
 ![Quad Image](./misc/enroute.png)
 
